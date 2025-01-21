@@ -15,7 +15,7 @@ typedef struct mensagemEstruturada {
   int xJoystick;
   int yJoystick;
   int swJoystick;
-  int direcao;
+  int codigoDeDirecao;
 } mensagemEstruturada;
 
 mensagemEstruturada meusDados;
@@ -27,7 +27,7 @@ void OnDataRecv(const uint8_t *mac, const uint8_t *dadosACaminho, int tamanho) {
   Serial.println("Valor no Y: " + String(meusDados.yJoystick));
   Serial.println("Valor no SW: " + String(meusDados.swJoystick));
 
-  switch (meusDados.direcao) {
+  switch (meusDados.codigoDeDirecao) {
     case 1:
       carroParaFrente();
       Serial.println("Status: Para frente");

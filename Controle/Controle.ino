@@ -15,7 +15,7 @@ typedef struct mensagemEstruturada {
   int xJoystick;
   int yJoystick;
   int swJoystick;
-  int direcao;
+  int codigoDeDirecao;
 } mensagemEstruturada;
 
 mensagemEstruturada meusDados;
@@ -53,29 +53,33 @@ void setup() {
   }
 }
 
+int direcao(int x, int y) {
+  if (x > 1000 && y < 1000) {
+    // Para frente
+    return 1;
+  } else if (x > 1000 && y > 3000) {
+    // Para trás
+    return 2;
+  } else if (x > 3000 && y > 1000) {
+    // Virar à direita
+    return 3;
+  } else if (x < 1000 && y > 1000) {
+    // Virar à esquerda
+    return 4;
+  } else {
+    // Ficar parado
+    return 0;
+  }
+}
+
 void loop() {
 
   meusDados.xJoystick = analogRead(PIN_EIXO_X_JOYSTICK);
   meusDados.yJoystick = analogRead(PIN_EIXO_Y_JOYSTICK);
   meusDados.swJoystick = analogRead(PIN_SW_JOYSTICK);
 
-  bool parado = meusDados.xJoystick > 1500 && meusDados.xJoystick < 2000 && meusDados.yJoystick > 1500 && meusDados.yJoystick < 2000;
-  bool paraFrente = meusDados.xJoystick > 1000 && meusDados.yJoystick < 1000;
-  bool paraTras = meusDados.xJoystick > 1000 && meusDados.yJoystick > 3000;
-  bool direita = meusDados.xJoystick > 3000 && meusDados.yJoystick > 1000;
-  bool esquerda = meusDados.xJoystick < 1000 && meusDados.yJoystick > 1000;
-
-  if (parado) {
-    meusDados.direcao = 0;
-  } else if (paraFrente) {
-    meusDados.direcao = 1;
-  } else if (paraTras) {
-    meusDados.direcao = 2;
-  } else if (direita) {
-    meusDados.direcao = 3;
-  } else if (esquerda) {
-    meusDados.direcao = 4;
-  }
+  // Define o sentido em que o carro deverá se mover
+  meusDados.codigoDeDirecao = direcao(meusDados.xJoystick, meusDados.yJoystick);
 
   esp_err_t resultadoDoEnvio = esp_now_send(ENDERECO_MAC_DO_RECEPTOR, (uint8_t *)&meusDados, sizeof(meusDados));
 
