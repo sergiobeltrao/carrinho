@@ -1,6 +1,6 @@
 ![Badge: Status do projeto](https://img.shields.io/badge/status-em%20desenvolvimento-yellow)
 
-⚠️ Atenção: O código foi testado com a versão 2.0.17 da biblioteca do ESP32, a versão 3.0.0 ou superior irá resultar em um erro de compilação.
+- O código foi testado com a versão 3.1.1 da biblioteca do ESP32.
 
 ## Lista de partes
 
