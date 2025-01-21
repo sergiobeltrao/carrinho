@@ -5,16 +5,16 @@
 ## Lista de partes
 
 - 2x ESP32-WROOM-32D
-- Kit Chassi 2WD
-- Módulo Joystick Analógico de 3 Eixos
-- Módulo Driver Ponte H - L298N
-- 2 Powerbanks (ou módulos de baterias)
+- 1x Kit Chassi 2WD
+- 1x Módulo Joystick Analógico de 3 Eixos
+- 1x Módulo Driver Ponte H - L298N
+- 2x Powerbanks (ou módulos de baterias)
 
 ## Diagramas
 <p align="center">
-    <img src="Imagens/CONTROLE.png" alt="drawing" width="500"/>
+    <img src="Imagens/CONTROLE.png" alt="drawing" width="550"/>
 </p>
 
 <p align="center">
-    <img src="Imagens/CARRO.png" alt="drawing" width="500"/>
+    <img src="Imagens/CARRO.png" alt="drawing" width="550"/>
 </p>
