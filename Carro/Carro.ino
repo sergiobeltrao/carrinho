@@ -3,12 +3,12 @@
 #include <esp_now.h>
 #include <WiFi.h>
 
-const int PIN_ENA_L298N = 23;
-const int PIN_IN1_L298N = 22;
-const int PIN_IN2_L298N = 1;
-const int PIN_IN3_L298N = 3;
-const int PIN_IN4_L298N = 21;
-const int PIN_ENB_L298N = 19;
+const int PIN_ENA_L298N = 13;
+const int PIN_IN1_L298N = 27;
+const int PIN_IN2_L298N = 26;
+const int PIN_IN3_L298N = 25;
+const int PIN_IN4_L298N = 33;
+const int PIN_ENB_L298N = 32;
 
 // A estrutura de dados que será recebida
 typedef struct mensagemEstruturada {
