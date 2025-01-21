@@ -1,4 +1,4 @@
-// Código do receptor. Testado com a versão 2.0.17 da biblioteca do ESP32 (a versão 3.0.0 ou superior irá resultar em erro de compilação).
+// Código do receptor. Testado com a versão 3.1.1 da biblioteca do ESP32.
 
 #include <esp_now.h>
 #include <WiFi.h>
@@ -20,8 +20,9 @@ typedef struct mensagemEstruturada {
 
 mensagemEstruturada meusDados;
 
-void OnDataRecv(const uint8_t *mac, const uint8_t *dadosACaminho, int tamanho) {
+esp_now_peer_info_t informacoesDoPar;
 
+void OnDataRecv(const esp_now_recv_info_t *info, const uint8_t *dadosACaminho, int tamanho) {
   memcpy(&meusDados, dadosACaminho, sizeof(meusDados));
   Serial.println("Valor no X: " + String(meusDados.xJoystick));
   Serial.println("Valor no Y: " + String(meusDados.yJoystick));

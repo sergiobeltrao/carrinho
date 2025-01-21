@@ -1,4 +1,4 @@
-// Código do transmissor. Testado com a versão 2.0.17 da biblioteca do ESP32 (a versão 3.0.0 ou superior irá resultar em erro de compilação).
+// Código do transmissor. Testado com a versão 3.1.1 da biblioteca do ESP32.
 
 #include <esp_now.h>
 #include <WiFi.h>
