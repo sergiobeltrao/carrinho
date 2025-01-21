@@ -10,6 +10,9 @@ const int PIN_IN3_L298N = 25;
 const int PIN_IN4_L298N = 33;
 const int PIN_ENB_L298N = 32;
 
+// Não se esqueça de trocar pelo endereço do seu transmissor.
+const uint8_t ENDERECO_MAC_DO_TRANSMISSOR[] = { 0x3C, 0x8A, 0x1F, 0x55, 0xBD, 0xA0 };
+
 // A estrutura de dados que será recebida
 typedef struct mensagemEstruturada {
   int xJoystick;
@@ -23,7 +26,22 @@ mensagemEstruturada meusDados;
 esp_now_peer_info_t informacoesDoPar;
 
 void OnDataRecv(const esp_now_recv_info_t *info, const uint8_t *dadosACaminho, int tamanho) {
+
+  // Valida se os pacotes recebidos são do transmissor correto
+  bool macCorreto = true;
+  for (int i = 0; i < 6; i++) {
+    if (info->src_addr[i] != ENDERECO_MAC_DO_TRANSMISSOR[i]) {
+      macCorreto = false;
+      break;
+    }
+  }
+
+  if (!macCorreto) {
+    return;
+  }
+
   memcpy(&meusDados, dadosACaminho, sizeof(meusDados));
+
   Serial.println("Valor no X: " + String(meusDados.xJoystick));
   Serial.println("Valor no Y: " + String(meusDados.yJoystick));
   Serial.println("Valor no SW: " + String(meusDados.swJoystick));
@@ -76,6 +94,15 @@ void setup() {
   }
 
   esp_now_register_recv_cb(OnDataRecv);
+
+  memcpy(informacoesDoPar.peer_addr, ENDERECO_MAC_DO_TRANSMISSOR, 6);
+  informacoesDoPar.channel = 0;
+  informacoesDoPar.encrypt = false;
+
+  if (esp_now_add_peer(&informacoesDoPar) != ESP_OK) {
+    Serial.println("Falha ao adicionar o dispositivo par");
+    return;
+  }
 }
 
 void loop() {
