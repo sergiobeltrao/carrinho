@@ -46,28 +46,7 @@ void OnDataRecv(const esp_now_recv_info_t *info, const uint8_t *dadosACaminho, i
   Serial.println("Valor no Y: " + String(meusDados.yJoystick));
   Serial.println("Valor no SW: " + String(meusDados.swJoystick));
 
-  switch (meusDados.codigoDeDirecao) {
-    case 1:
-      carroParaFrente();
-      Serial.println("Status: Para frente");
-      break;
-    case 2:
-      carroParaTras();
-      Serial.println("Status: Para trás");
-      break;
-    case 3:
-      carroParaDireita();
-      Serial.println("Status: Direita");
-      break;
-    case 4:
-      carroParaEsquerda();
-      Serial.println("Status: Esquerda");
-      break;
-    default:
-      carroParado();
-      Serial.println("Status: Parado");
-  }
-  Serial.println();
+  direcao(meusDados.codigoDeDirecao);
 }
 
 void setup() {
@@ -108,37 +87,38 @@ void setup() {
 void loop() {
 }
 
-void carroParaFrente() {
-  digitalWrite(PIN_IN1_L298N, HIGH);
-  digitalWrite(PIN_IN2_L298N, LOW);
-  digitalWrite(PIN_IN3_L298N, HIGH);
-  digitalWrite(PIN_IN4_L298N, LOW);
-}
+void direcao(int codigoDeDirecao) {
 
-void carroParaTras() {
-  digitalWrite(PIN_IN1_L298N, LOW);
-  digitalWrite(PIN_IN2_L298N, HIGH);
-  digitalWrite(PIN_IN3_L298N, LOW);
-  digitalWrite(PIN_IN4_L298N, HIGH);
-}
-
-void carroParaDireita() {
-  digitalWrite(PIN_IN1_L298N, LOW);
-  digitalWrite(PIN_IN2_L298N, LOW);
-  digitalWrite(PIN_IN3_L298N, HIGH);
-  digitalWrite(PIN_IN4_L298N, LOW);
-}
-
-void carroParaEsquerda() {
-  digitalWrite(PIN_IN1_L298N, HIGH);
-  digitalWrite(PIN_IN2_L298N, LOW);
-  digitalWrite(PIN_IN3_L298N, LOW);
-  digitalWrite(PIN_IN4_L298N, LOW);
-}
-
-void carroParado() {
-  digitalWrite(PIN_IN1_L298N, LOW);
-  digitalWrite(PIN_IN2_L298N, LOW);
-  digitalWrite(PIN_IN3_L298N, LOW);
-  digitalWrite(PIN_IN4_L298N, LOW);
+  if (codigoDeDirecao == 1) {
+    digitalWrite(PIN_IN1_L298N, HIGH);
+    digitalWrite(PIN_IN2_L298N, LOW);
+    digitalWrite(PIN_IN3_L298N, HIGH);
+    digitalWrite(PIN_IN4_L298N, LOW);
+    Serial.println("Status: Para frente");
+  } else if (codigoDeDirecao == 2) {
+    digitalWrite(PIN_IN1_L298N, LOW);
+    digitalWrite(PIN_IN2_L298N, HIGH);
+    digitalWrite(PIN_IN3_L298N, LOW);
+    digitalWrite(PIN_IN4_L298N, HIGH);
+    Serial.println("Status: Para trás");
+  } else if (codigoDeDirecao == 3) {
+    digitalWrite(PIN_IN1_L298N, LOW);
+    digitalWrite(PIN_IN2_L298N, LOW);
+    digitalWrite(PIN_IN3_L298N, HIGH);
+    digitalWrite(PIN_IN4_L298N, LOW);
+    Serial.println("Status: Direita");
+  } else if (codigoDeDirecao == 4) {
+    digitalWrite(PIN_IN1_L298N, HIGH);
+    digitalWrite(PIN_IN2_L298N, LOW);
+    digitalWrite(PIN_IN3_L298N, LOW);
+    digitalWrite(PIN_IN4_L298N, LOW);
+    Serial.println("Status: Esquerda");
+  } else {
+    digitalWrite(PIN_IN1_L298N, LOW);
+    digitalWrite(PIN_IN2_L298N, LOW);
+    digitalWrite(PIN_IN3_L298N, LOW);
+    digitalWrite(PIN_IN4_L298N, LOW);
+    Serial.println("Status: Parado");
+  }
+  Serial.println();
 }
