@@ -9,7 +9,8 @@
 - 1x Kit Chassi 2WD
 - 1x Módulo Joystick Analógico de 3 Eixos
 - 1x Módulo Driver Ponte H - L298N
-- 2x Powerbanks (ou módulos de baterias)
+- 2x Power Banks (ou módulos de baterias)
+- 2x Chave Táteis (push buttons)
 
 ## Diagramas
 <p align="center">
