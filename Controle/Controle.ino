@@ -6,6 +6,13 @@
 const int PIN_SW_JOYSTICK = 32;
 const int PIN_EIXO_X_JOYSTICK = 34;
 const int PIN_EIXO_Y_JOYSTICK = 35;
+const int PIN_AUMENTAR_VELOCIDADE = 33;
+const int PIN_DIMINUIR_VELOCIDADE = 25;
+
+int nivelDeVelocidadeDoCarro = 100;
+long ultimoIncrementoDeVelocidade = 0;
+long ultimoDecrementoDeVelocidade = 0;
+const int TEMPO_DE_ATRASO_DE_DEBOUNCE = 50;
 
 // Não se esqueça de trocar pelo endereço do seu receptor.
 const uint8_t ENDERECO_MAC_DO_RECEPTOR[] = { 0x3C, 0x8A, 0x1F, 0x50, 0x65, 0x7C };
@@ -16,6 +23,7 @@ typedef struct mensagemEstruturada {
   int yJoystick;
   int swJoystick;
   int codigoDeDirecao;
+  int velocidade;
 } mensagemEstruturada;
 
 mensagemEstruturada meusDados;
@@ -33,6 +41,8 @@ void setup() {
   Serial.begin(115200);
 
   pinMode(PIN_SW_JOYSTICK, INPUT_PULLUP);
+  pinMode(PIN_AUMENTAR_VELOCIDADE, INPUT_PULLUP);
+  pinMode(PIN_DIMINUIR_VELOCIDADE, INPUT_PULLUP);
 
   WiFi.mode(WIFI_STA);
 
@@ -73,11 +83,33 @@ int direcao(int x, int y) {
   }
 }
 
+int controleDeVelocidade() {
+  unsigned long agora = millis();
+
+  if (digitalRead(PIN_AUMENTAR_VELOCIDADE) == LOW && nivelDeVelocidadeDoCarro < 100) {
+    if (agora - ultimoIncrementoDeVelocidade > TEMPO_DE_ATRASO_DE_DEBOUNCE) {
+      nivelDeVelocidadeDoCarro++;
+      ultimoIncrementoDeVelocidade = agora;
+    }
+  }
+
+  if (digitalRead(PIN_DIMINUIR_VELOCIDADE) == LOW && nivelDeVelocidadeDoCarro > 0) {
+    if (agora - ultimoDecrementoDeVelocidade > TEMPO_DE_ATRASO_DE_DEBOUNCE) {
+      nivelDeVelocidadeDoCarro--;
+      ultimoDecrementoDeVelocidade = agora;
+    }
+  }
+
+  return nivelDeVelocidadeDoCarro;
+}
+
 void loop() {
 
   meusDados.xJoystick = analogRead(PIN_EIXO_X_JOYSTICK);
   meusDados.yJoystick = analogRead(PIN_EIXO_Y_JOYSTICK);
   meusDados.swJoystick = analogRead(PIN_SW_JOYSTICK);
+  meusDados.velocidade = controleDeVelocidade();
+  Serial.println("Nível de velocidade: " + String(meusDados.velocidade) + "%");
 
   // Define o sentido em que o carro deverá se mover
   meusDados.codigoDeDirecao = direcao(meusDados.xJoystick, meusDados.yJoystick);

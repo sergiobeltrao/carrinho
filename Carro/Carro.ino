@@ -19,6 +19,7 @@ typedef struct mensagemEstruturada {
   int yJoystick;
   int swJoystick;
   int codigoDeDirecao;
+  int velocidade;
 } mensagemEstruturada;
 
 mensagemEstruturada meusDados;
@@ -45,6 +46,7 @@ void OnDataRecv(const esp_now_recv_info_t *info, const uint8_t *dadosACaminho, i
   Serial.println("Valor no X: " + String(meusDados.xJoystick));
   Serial.println("Valor no Y: " + String(meusDados.yJoystick));
   Serial.println("Valor no SW: " + String(meusDados.swJoystick));
+  Serial.println("Nível de velocidade: " + String(meusDados.velocidade) + "%");
 
   direcao(meusDados.codigoDeDirecao);
 }
@@ -60,10 +62,10 @@ void setup() {
   pinMode(PIN_IN4_L298N, OUTPUT);
   pinMode(PIN_ENB_L298N, OUTPUT);
 
-  // Velocidade no máximo
-  // TODO: Criar controle de velocidade com PWM do ESP32
-  digitalWrite(PIN_ENA_L298N, HIGH);
-  digitalWrite(PIN_ENB_L298N, HIGH);
+  // Para a velocidade dos motores ficar sempre no máximo, descomente as próximas
+  // linhas e comente a função controleDeVelocidade() dentro do loop
+  // digitalWrite(PIN_ENA_L298N, HIGH);
+  // digitalWrite(PIN_ENB_L298N, HIGH);
 
   WiFi.mode(WIFI_STA);
 
@@ -85,6 +87,24 @@ void setup() {
 }
 
 void loop() {
+  controleDeVelocidade();
+}
+
+void controleDeVelocidade() {
+  /*
+  O valor enviado ao PWM  deve ficar entre 0 e 255. Como a variável de nível de velocidade
+  variade 0 a 100, o valor enviado será o resultado inteiro da sua multiplicação por 2,55.
+  */
+  int valorPWM = round(meusDados.velocidade * 2.55);
+
+  Serial.println("Valor de clock: " + String(valorPWM));
+
+  // Pino, frequência em Hz e resolução em bits
+  ledcAttach(PIN_ENA_L298N, 5000, 8);
+  ledcAttach(PIN_ENB_L298N, 5000, 8);
+
+  ledcWrite(PIN_ENA_L298N, valorPWM);
+  ledcWrite(PIN_ENB_L298N, valorPWM);
 }
 
 void direcao(int codigoDeDirecao) {
