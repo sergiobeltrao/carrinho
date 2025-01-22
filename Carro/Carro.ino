@@ -3,23 +3,23 @@
 #include <esp_now.h>
 #include <WiFi.h>
 
-const int PIN_ENA_L298N = 13;
-const int PIN_IN1_L298N = 27;
-const int PIN_IN2_L298N = 26;
-const int PIN_IN3_L298N = 25;
-const int PIN_IN4_L298N = 33;
-const int PIN_ENB_L298N = 32;
-
 // Não se esqueça de trocar pelo endereço do seu transmissor.
 const uint8_t ENDERECO_MAC_DO_TRANSMISSOR[] = { 0x3C, 0x8A, 0x1F, 0x55, 0xBD, 0xA0 };
 
+const short PIN_ENA_L298N = 13;
+const short PIN_IN1_L298N = 27;
+const short PIN_IN2_L298N = 26;
+const short PIN_IN3_L298N = 25;
+const short PIN_IN4_L298N = 33;
+const short PIN_ENB_L298N = 32;
+
 // A estrutura de dados que será recebida
 typedef struct mensagemEstruturada {
-  int xJoystick;
-  int yJoystick;
-  int swJoystick;
-  int codigoDeDirecao;
-  int velocidade;
+  short xJoystick;
+  short yJoystick;
+  short swJoystick;
+  short codigoDeDirecao;
+  short velocidade;
 } mensagemEstruturada;
 
 mensagemEstruturada meusDados;
@@ -30,7 +30,7 @@ void OnDataRecv(const esp_now_recv_info_t *info, const uint8_t *dadosACaminho, i
 
   // Valida se os pacotes recebidos são do transmissor correto
   bool macCorreto = true;
-  for (int i = 0; i < 6; i++) {
+  for (short i = 0; i < 6; i++) {
     if (info->src_addr[i] != ENDERECO_MAC_DO_TRANSMISSOR[i]) {
       macCorreto = false;
       break;
@@ -42,13 +42,6 @@ void OnDataRecv(const esp_now_recv_info_t *info, const uint8_t *dadosACaminho, i
   }
 
   memcpy(&meusDados, dadosACaminho, sizeof(meusDados));
-
-  Serial.println("Valor no X: " + String(meusDados.xJoystick));
-  Serial.println("Valor no Y: " + String(meusDados.yJoystick));
-  Serial.println("Valor no SW: " + String(meusDados.swJoystick));
-  Serial.println("Nível de velocidade: " + String(meusDados.velocidade) + "%");
-
-  direcao(meusDados.codigoDeDirecao);
 }
 
 void setup() {
@@ -62,10 +55,10 @@ void setup() {
   pinMode(PIN_IN4_L298N, OUTPUT);
   pinMode(PIN_ENB_L298N, OUTPUT);
 
-  // Para a velocidade dos motores ficar sempre no máximo, descomente as próximas
-  // linhas e comente a função controleDeVelocidade() dentro do loop
-  // digitalWrite(PIN_ENA_L298N, HIGH);
-  // digitalWrite(PIN_ENB_L298N, HIGH);
+  /* Para a velocidade dos motores ficar sempre no máximo, descomente as próximas
+  linhas e comente a função controleDeVelocidade() dentro do loop
+  digitalWrite(PIN_ENA_L298N, HIGH);
+  digitalWrite(PIN_ENB_L298N, HIGH); */
 
   WiFi.mode(WIFI_STA);
 
@@ -86,18 +79,10 @@ void setup() {
   }
 }
 
-void loop() {
-  controleDeVelocidade();
-}
-
 void controleDeVelocidade() {
-  /*
-  O valor enviado ao PWM  deve ficar entre 0 e 255. Como a variável de nível de velocidade
-  variade 0 a 100, o valor enviado será o resultado inteiro da sua multiplicação por 2,55.
-  */
+  /* O valor enviado ao PWM  deve ficar entre 0 e 255. Como a variável de nível de velocidade
+  varia de 0 a 100, o valor enviado será o resultado inteiro da sua multiplicação por 2,55. */
   int valorPWM = round(meusDados.velocidade * 2.55);
-
-  Serial.println("Valor de clock: " + String(valorPWM));
 
   // Pino, frequência em Hz e resolução em bits
   ledcAttach(PIN_ENA_L298N, 5000, 8);
@@ -107,8 +92,7 @@ void controleDeVelocidade() {
   ledcWrite(PIN_ENB_L298N, valorPWM);
 }
 
-void direcao(int codigoDeDirecao) {
-
+void direcao(short codigoDeDirecao) {
   if (codigoDeDirecao == 1) {
     digitalWrite(PIN_IN1_L298N, HIGH);
     digitalWrite(PIN_IN2_L298N, LOW);
@@ -140,5 +124,15 @@ void direcao(int codigoDeDirecao) {
     digitalWrite(PIN_IN4_L298N, LOW);
     Serial.println("Status: Parado");
   }
+}
+
+void loop() {
+  controleDeVelocidade();
+  direcao(meusDados.codigoDeDirecao);
+  Serial.println("Valor no X: " + String(meusDados.xJoystick));
+  Serial.println("Valor no Y: " + String(meusDados.yJoystick));
+  Serial.println("Valor no SW: " + String(meusDados.swJoystick));
+  Serial.println("Nível de velocidade: " + String(meusDados.velocidade) + "%");
+  // Serial.println("Valor de clock: " + String(valorPWM));
   Serial.println();
 }
