@@ -54,16 +54,17 @@ void setup() {
 }
 
 int direcao(int x, int y) {
-  if (x > 1000 && y < 1000) {
+
+  if (x >= 0 && y == 0) {
     // Para frente
     return 1;
-  } else if (x > 1000 && y > 3000) {
+  } else if (x >= 0 && y > 3072) {
     // Para trás
     return 2;
-  } else if (x > 3000 && y > 1000) {
+  } else if (x >= 3072 && y <= 4096) {
     // Virar à direita
     return 3;
-  } else if (x < 1000 && y > 1000) {
+  } else if (x == 0 && y >= 0) {
     // Virar à esquerda
     return 4;
   } else {
