@@ -2,9 +2,14 @@
 
 #include <esp_now.h>
 #include <WiFi.h>
+#include <U8g2lib.h>
+#include <Wire.h>
 
 // Não se esqueça de trocar pelo endereço do seu receptor.
 const uint8_t ENDERECO_MAC_DO_RECEPTOR[] = { 0x3C, 0x8A, 0x1F, 0x50, 0x65, 0x7C };
+
+// Configuração do display
+U8G2_SSD1306_128X64_NONAME_F_HW_I2C u8g2(U8G2_R0, U8X8_PIN_NONE);
 
 const short PIN_SW_JOYSTICK = 32;
 const short PIN_EIXO_X_JOYSTICK = 34;
@@ -37,6 +42,8 @@ void OnDataSent(const uint8_t *mac_addr, esp_now_send_status_t status) {
 }
 
 void setup() {
+
+  u8g2.begin();
 
   Serial.begin(115200);
   pinMode(PIN_SW_JOYSTICK, INPUT_PULLUP);
@@ -94,12 +101,30 @@ short controleDeVelocidade() {
   return nivelDeVelocidadeDoCarro;
 }
 
+void display() {
+  char textoDisplay[5];
+  snprintf(textoDisplay, sizeof(textoDisplay), "%d%%", meusDados.velocidade);
+
+  u8g2.clearBuffer();
+  u8g2.setFont(u8g2_font_fub30_tr);
+
+  if (meusDados.velocidade < 100) {
+    // Espaçamento a esquerda, espaçamento superior, texto
+    u8g2.drawStr(25, 50, textoDisplay);
+  } else {
+    u8g2.drawStr(10, 50, textoDisplay);
+  }
+  u8g2.sendBuffer();
+}
+
 void loop() {
   meusDados.xJoystick = analogRead(PIN_EIXO_X_JOYSTICK);
   meusDados.yJoystick = analogRead(PIN_EIXO_Y_JOYSTICK);
   meusDados.swJoystick = analogRead(PIN_SW_JOYSTICK);
   meusDados.codigoDeDirecao = direcao(meusDados.xJoystick, meusDados.yJoystick);
   meusDados.velocidade = controleDeVelocidade();
+
+  display();
 
   esp_err_t resultadoDoEnvio = esp_now_send(ENDERECO_MAC_DO_RECEPTOR, (uint8_t *)&meusDados, sizeof(meusDados));
   if (resultadoDoEnvio == ESP_OK) {
