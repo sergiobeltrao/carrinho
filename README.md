@@ -1,6 +1,6 @@
 ![Badge: Status do projeto](https://img.shields.io/badge/status-em%20desenvolvimento-yellow)
 
-- O código foi testado com a versão 3.1.1 da biblioteca do ESP32
+- O código foi testado com a versão 3.1.1 da biblioteca do ESP32.
 - Certifique-se de substituir o endereço MAC no código pelos do seu transmissor e receptor.
 
 ## Lista de partes
@@ -11,7 +11,7 @@
 - 1x Módulo Driver Ponte H - L298N
 - 2x Power Banks (ou módulos de baterias)
 - 2x Chave Táteis (push buttons)
-- 1x Display OLED 0.96″ 128×64
+- 1x Display OLED SSD1306 0.96″ 128×64
 
 ## Diagramas
 <p align="center">
