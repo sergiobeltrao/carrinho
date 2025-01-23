@@ -11,6 +11,7 @@
 - 1x Módulo Driver Ponte H - L298N
 - 2x Power Banks (ou módulos de baterias)
 - 2x Chave Táteis (push buttons)
+- 1x Display OLED 0.96″ 128×64
 
 ## Diagramas
 <p align="center">
