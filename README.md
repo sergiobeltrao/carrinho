@@ -7,7 +7,7 @@
 
 - 2x ESP32-WROOM-32D
 - 1x Kit Chassi 2WD
-- 1x Módulo Joystick Analógico de 3 Eixos
+- 2x Módulo Joystick Analógico de 3 Eixos
 - 1x Módulo Driver Ponte H - L298N
 - 2x Power Banks (ou módulos de baterias)
 - 2x Chave Táteis (push buttons)
