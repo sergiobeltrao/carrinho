@@ -15,9 +15,10 @@ const short PIN_ENB_L298N = 32;
 
 // A estrutura de dados que será recebida
 typedef struct mensagemEstruturada {
-  short xJoystick;
-  short yJoystick;
-  short swJoystick;
+  short xJoystickDireita;
+  short yJoystickDireita;
+  short xJoystickEsquerda;
+  short yJoystickEsquerda;
   short codigoDeDirecao;
   short velocidade;
 } mensagemEstruturada;
@@ -94,45 +95,63 @@ void controleDeVelocidade() {
 
 void direcao(short codigoDeDirecao) {
   if (codigoDeDirecao == 1) {
+    // Para frente
     digitalWrite(PIN_IN1_L298N, HIGH);
     digitalWrite(PIN_IN2_L298N, LOW);
     digitalWrite(PIN_IN3_L298N, HIGH);
     digitalWrite(PIN_IN4_L298N, LOW);
-    Serial.println("Status: Para frente");
   } else if (codigoDeDirecao == 2) {
+    // Para trás
     digitalWrite(PIN_IN1_L298N, LOW);
     digitalWrite(PIN_IN2_L298N, HIGH);
     digitalWrite(PIN_IN3_L298N, LOW);
     digitalWrite(PIN_IN4_L298N, HIGH);
-    Serial.println("Status: Para trás");
   } else if (codigoDeDirecao == 3) {
+    // Para a direita
     digitalWrite(PIN_IN1_L298N, LOW);
     digitalWrite(PIN_IN2_L298N, LOW);
     digitalWrite(PIN_IN3_L298N, HIGH);
     digitalWrite(PIN_IN4_L298N, LOW);
-    Serial.println("Status: Direita");
   } else if (codigoDeDirecao == 4) {
+    // Para a esquerda
     digitalWrite(PIN_IN1_L298N, HIGH);
     digitalWrite(PIN_IN2_L298N, LOW);
     digitalWrite(PIN_IN3_L298N, LOW);
     digitalWrite(PIN_IN4_L298N, LOW);
-    Serial.println("Status: Esquerda");
   } else {
+    // Parado
     digitalWrite(PIN_IN1_L298N, LOW);
     digitalWrite(PIN_IN2_L298N, LOW);
     digitalWrite(PIN_IN3_L298N, LOW);
     digitalWrite(PIN_IN4_L298N, LOW);
-    Serial.println("Status: Parado");
+  }
+}
+
+void mensagensDeDebug(bool ativado) {
+  if (ativado) {
+    Serial.println("Valor no X da Direita: " + String(meusDados.xJoystickDireita));
+    Serial.println("Valor no Y da Direita: " + String(meusDados.yJoystickDireita));
+    Serial.println("Valor no X da Esquerda: " + String(meusDados.xJoystickEsquerda));
+    Serial.println("Valor no Y da Esquerda: " + String(meusDados.yJoystickEsquerda));
+    Serial.println("Nível de velocidade: " + String(meusDados.velocidade) + "%");
+    // Serial.println("Valor de clock: " + String(valorPWM));
+    if (meusDados.codigoDeDirecao == 0) {
+      Serial.println("Direção: Parado");
+    } else if (meusDados.codigoDeDirecao == 1) {
+      Serial.println("Direção: Para Frente");
+    } else if (meusDados.codigoDeDirecao == 2) {
+      Serial.println("Direção: Para Trás");
+    } else if (meusDados.codigoDeDirecao == 3) {
+      Serial.println("Direção: Para a Direita");
+    } else if (meusDados.codigoDeDirecao == 4) {
+      Serial.println("Direção: Para a Esquerda");
+    }
+    Serial.println();
   }
 }
 
 void loop() {
   controleDeVelocidade();
   direcao(meusDados.codigoDeDirecao);
-  Serial.println("Valor no X: " + String(meusDados.xJoystick));
-  Serial.println("Valor no Y: " + String(meusDados.yJoystick));
-  Serial.println("Valor no SW: " + String(meusDados.swJoystick));
-  Serial.println("Nível de velocidade: " + String(meusDados.velocidade) + "%");
-  // Serial.println("Valor de clock: " + String(valorPWM));
-  Serial.println();
+  mensagensDeDebug(true);
 }

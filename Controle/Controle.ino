@@ -11,9 +11,10 @@ const uint8_t ENDERECO_MAC_DO_RECEPTOR[] = { 0x3C, 0x8A, 0x1F, 0x50, 0x65, 0x7C 
 // Configuração do display
 U8G2_SSD1306_128X64_NONAME_F_HW_I2C u8g2(U8G2_R0, U8X8_PIN_NONE);
 
-const short PIN_SW_JOYSTICK = 32;
-const short PIN_EIXO_X_JOYSTICK = 34;
-const short PIN_EIXO_Y_JOYSTICK = 35;
+const short PIN_EIXO_X_JOYSTICK_DIREITA = 34;
+const short PIN_EIXO_Y_JOYSTICK_DIREITA = 35;
+const short PIN_EIXO_X_JOYSTICK_ESQUERDA = 36;
+const short PIN_EIXO_Y_JOYSTICK_ESQUERDA = 39;
 const short PIN_AUMENTAR_VELOCIDADE = 33;
 const short PIN_DIMINUIR_VELOCIDADE = 25;
 
@@ -24,9 +25,10 @@ const short TEMPO_DE_ATRASO_DE_DEBOUNCE = 50;
 
 // A estrutura de dados que será enviada
 typedef struct mensagemEstruturada {
-  short xJoystick;
-  short yJoystick;
-  short swJoystick;
+  short xJoystickDireita;
+  short yJoystickDireita;
+  short xJoystickEsquerda;
+  short yJoystickEsquerda;
   short codigoDeDirecao;
   short velocidade;
 } mensagemEstruturada;
@@ -46,9 +48,10 @@ void setup() {
   u8g2.begin();
 
   Serial.begin(115200);
-  pinMode(PIN_SW_JOYSTICK, INPUT_PULLUP);
   pinMode(PIN_AUMENTAR_VELOCIDADE, INPUT_PULLUP);
   pinMode(PIN_DIMINUIR_VELOCIDADE, INPUT_PULLUP);
+  pinMode(PIN_EIXO_X_JOYSTICK_ESQUERDA, INPUT_PULLUP);
+  pinMode(PIN_EIXO_Y_JOYSTICK_ESQUERDA, INPUT_PULLUP);
   WiFi.mode(WIFI_STA);
 
   if (esp_now_init() != ESP_OK) {
@@ -68,15 +71,35 @@ void setup() {
   }
 }
 
-short direcao(short x, short y) {
-  // 1 = para frente, 2 = para trás, 3 = direita, 4 = esquerda, 0 = ficar parado
-  if (x >= 0 && y == 0) {
+short direcao(short xDireita, short yDireita, short xEsquerda, short yEsquerda) {
+
+  bool joystickDaDireitoParado = (xDireita >= 1600 && xDireita <= 1900) && (yDireita >= 1600 && yDireita <= 1900);
+  bool joystickDaEsquerdaParado = (xEsquerda >= 1600 && xEsquerda <= 1900) && (yEsquerda >= 1600 && yEsquerda <= 1900);
+
+  bool joystickDaDireitoParaFrente = xDireita >= 0 && yDireita == 0;
+  bool joystickDaEsquerdaParaFrente = xEsquerda >= 0 && yEsquerda == 0;
+
+  bool joystickDaDireitoParaTras = xDireita >= 0 && yDireita > 3072;
+  bool joystickDaEsquerdaParaTras = xEsquerda >= 0 && yEsquerda > 3072;
+
+  bool joystickDaDireitoParaDireita = xDireita >= 3072 && yDireita <= 4096;
+  bool joystickDaEsquerdaParaDireita = xEsquerda >= 3072 && yEsquerda <= 4096;
+
+  bool joystickDaDireitoParaEsquerda = xDireita == 0 && yDireita >= 0;
+  bool joystickDaEsquerdaParaEsquerda = xEsquerda == 0 && yEsquerda >= 0;
+
+  bool paraFrente = joystickDaDireitoParaFrente && joystickDaEsquerdaParaFrente || joystickDaDireitoParaFrente && joystickDaEsquerdaParado || joystickDaDireitoParado && joystickDaEsquerdaParaFrente;
+  bool paraTras = joystickDaDireitoParaTras && joystickDaEsquerdaParaTras || joystickDaDireitoParaTras && joystickDaEsquerdaParado || joystickDaDireitoParado && joystickDaEsquerdaParaTras;
+  bool direita = joystickDaDireitoParaDireita && joystickDaEsquerdaParaDireita || joystickDaDireitoParado && joystickDaEsquerdaParaDireita || joystickDaDireitoParaDireita && joystickDaEsquerdaParado;
+  bool esquerda = joystickDaDireitoParaEsquerda && joystickDaEsquerdaParaEsquerda || joystickDaDireitoParaEsquerda && joystickDaEsquerdaParado || joystickDaDireitoParado && joystickDaEsquerdaParaEsquerda;
+
+  if (paraFrente) {
     return 1;
-  } else if (x >= 0 && y > 3072) {
+  } else if (paraTras) {
     return 2;
-  } else if (x >= 3072 && y <= 4096) {
+  } else if (direita) {
     return 3;
-  } else if (x == 0 && y >= 0) {
+  } else if (esquerda) {
     return 4;
   } else {
     return 0;
@@ -117,21 +140,40 @@ void display() {
   u8g2.sendBuffer();
 }
 
-void loop() {
-  meusDados.xJoystick = analogRead(PIN_EIXO_X_JOYSTICK);
-  meusDados.yJoystick = analogRead(PIN_EIXO_Y_JOYSTICK);
-  meusDados.swJoystick = analogRead(PIN_SW_JOYSTICK);
-  meusDados.codigoDeDirecao = direcao(meusDados.xJoystick, meusDados.yJoystick);
-  meusDados.velocidade = controleDeVelocidade();
+void mensagensDeDebug(bool ativado) {
+  Serial.println("Valor no X da Direita: " + String(meusDados.xJoystickDireita));
+  Serial.println("Valor no Y da Direita: " + String(meusDados.yJoystickDireita));
+  Serial.println("Valor no X da Esquerda: " + String(meusDados.xJoystickEsquerda));
+  Serial.println("Valor no Y da Esquerda: " + String(meusDados.yJoystickEsquerda));
+  Serial.println("Nível de velocidade: " + String(meusDados.velocidade) + "%");
 
+  if (meusDados.codigoDeDirecao == 0) {
+    Serial.println("Direção: Parado");
+  } else if (meusDados.codigoDeDirecao == 1) {
+    Serial.println("Direção: Para Frente");
+  } else if (meusDados.codigoDeDirecao == 2) {
+    Serial.println("Direção: Para Trás");
+  } else if (meusDados.codigoDeDirecao == 3) {
+    Serial.println("Direção: Para a Direita");
+  } else if (meusDados.codigoDeDirecao == 4) {
+    Serial.println("Direção: Para a Esquerda");
+  }
+}
+
+void loop() {
+  meusDados.xJoystickDireita = analogRead(PIN_EIXO_X_JOYSTICK_DIREITA);
+  meusDados.yJoystickDireita = analogRead(PIN_EIXO_Y_JOYSTICK_DIREITA);
+  meusDados.xJoystickEsquerda = analogRead(PIN_EIXO_X_JOYSTICK_ESQUERDA);
+  meusDados.yJoystickEsquerda = analogRead(PIN_EIXO_Y_JOYSTICK_ESQUERDA);
+
+  meusDados.codigoDeDirecao = direcao(meusDados.xJoystickDireita, meusDados.yJoystickDireita, meusDados.xJoystickEsquerda, meusDados.yJoystickEsquerda);
+  meusDados.velocidade = controleDeVelocidade();
   display();
 
   esp_err_t resultadoDoEnvio = esp_now_send(ENDERECO_MAC_DO_RECEPTOR, (uint8_t *)&meusDados, sizeof(meusDados));
   if (resultadoDoEnvio == ESP_OK) {
-    Serial.println("Valor no X: " + String(meusDados.xJoystick));
-    Serial.println("Valor no Y: " + String(meusDados.yJoystick));
-    Serial.println("Valor no SW: " + String(meusDados.swJoystick));
-    Serial.println("Nível de velocidade: " + String(meusDados.velocidade) + "%");
+    Serial.println("Pacote enviado");
+    mensagensDeDebug(true);
   } else {
     Serial.println("Erro no envio do pacote");
   }
