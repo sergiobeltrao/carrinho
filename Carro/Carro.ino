@@ -1,5 +1,4 @@
 // Código do receptor. Testado com a versão 3.1.1 da biblioteca do ESP32.
-
 #include <esp_now.h>
 #include <WiFi.h>
 
@@ -27,6 +26,7 @@ mensagemEstruturada meusDados;
 
 esp_now_peer_info_t informacoesDoPar;
 
+// Função que será chamada ao receber os pacotes
 void OnDataRecv(const esp_now_recv_info_t *info, const uint8_t *dadosACaminho, int tamanho) {
 
   // Valida se os pacotes recebidos são do transmissor correto
@@ -43,41 +43,6 @@ void OnDataRecv(const esp_now_recv_info_t *info, const uint8_t *dadosACaminho, i
   }
 
   memcpy(&meusDados, dadosACaminho, sizeof(meusDados));
-}
-
-void setup() {
-
-  Serial.begin(115200);
-
-  pinMode(PIN_ENA_L298N, OUTPUT);
-  pinMode(PIN_IN1_L298N, OUTPUT);
-  pinMode(PIN_IN2_L298N, OUTPUT);
-  pinMode(PIN_IN3_L298N, OUTPUT);
-  pinMode(PIN_IN4_L298N, OUTPUT);
-  pinMode(PIN_ENB_L298N, OUTPUT);
-
-  /* Para a velocidade dos motores ficar sempre no máximo, descomente as próximas
-  linhas e comente a função controleDeVelocidade() dentro do loop
-  digitalWrite(PIN_ENA_L298N, HIGH);
-  digitalWrite(PIN_ENB_L298N, HIGH); */
-
-  WiFi.mode(WIFI_STA);
-
-  if (esp_now_init() != ESP_OK) {
-    Serial.println("Erro ao inicializar o ESP-NOW");
-    return;
-  }
-
-  esp_now_register_recv_cb(OnDataRecv);
-
-  memcpy(informacoesDoPar.peer_addr, ENDERECO_MAC_DO_TRANSMISSOR, 6);
-  informacoesDoPar.channel = 0;
-  informacoesDoPar.encrypt = false;
-
-  if (esp_now_add_peer(&informacoesDoPar) != ESP_OK) {
-    Serial.println("Falha ao adicionar o dispositivo par");
-    return;
-  }
 }
 
 void controleDeVelocidade() {
@@ -147,6 +112,41 @@ void mensagensDeDebug(bool ativado) {
       Serial.println("Direção: Para a Esquerda");
     }
     Serial.println();
+  }
+}
+
+void setup() {
+
+  Serial.begin(115200);
+
+  pinMode(PIN_ENA_L298N, OUTPUT);
+  pinMode(PIN_IN1_L298N, OUTPUT);
+  pinMode(PIN_IN2_L298N, OUTPUT);
+  pinMode(PIN_IN3_L298N, OUTPUT);
+  pinMode(PIN_IN4_L298N, OUTPUT);
+  pinMode(PIN_ENB_L298N, OUTPUT);
+
+  /* Para a velocidade dos motores ficar sempre no máximo, descomente as próximas
+  linhas e comente a função controleDeVelocidade() dentro do loop
+  digitalWrite(PIN_ENA_L298N, HIGH);
+  digitalWrite(PIN_ENB_L298N, HIGH); */
+
+  WiFi.mode(WIFI_STA);
+
+  if (esp_now_init() != ESP_OK) {
+    Serial.println("Erro ao inicializar o ESP-NOW");
+    return;
+  }
+
+  esp_now_register_recv_cb(OnDataRecv);
+
+  memcpy(informacoesDoPar.peer_addr, ENDERECO_MAC_DO_TRANSMISSOR, 6);
+  informacoesDoPar.channel = 0;
+  informacoesDoPar.encrypt = false;
+
+  if (esp_now_add_peer(&informacoesDoPar) != ESP_OK) {
+    Serial.println("Falha ao adicionar o dispositivo par");
+    return;
   }
 }
 
