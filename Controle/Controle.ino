@@ -100,13 +100,16 @@ void display() {
   snprintf(textoDisplay, sizeof(textoDisplay), "%d%%", meusDados.velocidade);
 
   u8g2.clearBuffer();
-  u8g2.setFont(u8g2_font_fub30_tr);
-
+  // u8g2.setFont(u8g2_font_fub30_tr);
+  u8g2.setFont(u8g2_font_fub17_tr);
+  // Espaçamento a esquerda, espaçamento superior, texto
+  u8g2.drawStr(5, 20, "Velocidade");
   if (meusDados.velocidade < 100) {
-    // Espaçamento a esquerda, espaçamento superior, texto
-    u8g2.drawStr(25, 50, textoDisplay);
+    // u8g2.drawStr(25, 50, textoDisplay);
+    u8g2.drawStr(42, 50, textoDisplay);
   } else {
-    u8g2.drawStr(10, 50, textoDisplay);
+    // u8g2.drawStr(10, 50, textoDisplay);
+    u8g2.drawStr(35, 50, textoDisplay);
   }
   u8g2.sendBuffer();
 }
