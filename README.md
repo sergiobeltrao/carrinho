@@ -1,4 +1,4 @@
-![Badge: Status do projeto](https://img.shields.io/badge/status-em%20desenvolvimento-yellow)
+![version](https://img.shields.io/badge/version-1.0.0-green)
 
 - O código foi testado com a versão 3.1.1 da biblioteca do ESP32.
 - Certifique-se de substituir o endereço MAC no código pelos do seu transmissor e receptor.
