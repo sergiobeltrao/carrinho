@@ -1,4 +1,4 @@
-![version](https://img.shields.io/badge/version-1.0.1-green)
+![version](https://img.shields.io/badge/version-1.1.0-green)
 
 - O código foi testado com a versão 3.1.1 da biblioteca do ESP32.
 - Certifique-se de substituir o endereço MAC no código pelos do seu transmissor e receptor.
@@ -11,8 +11,12 @@
 - 2x Power Banks (ou módulos de baterias) para o carro e controle
 - 2x Módulo Joystick Analógico de 3 Eixos
 - 2x Chave Táteis (push buttons)
-- 1x Display OLED SSD1306 0.96″ 128×64
-
+- 1x Display OLED SSD1306 0.96″ 128×64 (indicador do nível de velocidade)
+- 1x LED 3mm verde
+- 1x LED 3mm vermelho
+- 1x resistor 100Ω 1/4W
+- 1x resistor 150Ω 1/4W
+  
 ## Diagramas
 
 <p align="center">

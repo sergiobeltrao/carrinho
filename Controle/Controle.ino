@@ -17,6 +17,10 @@ const short PIN_EIXO_Y_JOYSTICK_ESQUERDA = 39;
 const short PIN_AUMENTAR_VELOCIDADE = 33;
 const short PIN_DIMINUIR_VELOCIDADE = 25;
 
+const short PIN_LED_CONEXAO_FALHOU = 26;
+const short PIN_LED_CONEXAO_BEM_SUCEDIDA = 27;
+bool conexaoBemSucedida = false;
+
 unsigned short nivelDeVelocidadeDoCarro = 100;
 unsigned int ultimoIncrementoDeVelocidade = 0;
 unsigned int ultimoDecrementoDeVelocidade = 0;
@@ -38,8 +42,16 @@ esp_now_peer_info_t informacoesDoPar;
 
 // A função que é chamada quando o pacote é enviado
 void OnDataSent(const uint8_t *mac_addr, esp_now_send_status_t status) {
+
   Serial.print("\r\nStatus de envio: ");
-  Serial.println(status == ESP_NOW_SEND_SUCCESS ? "bem-sucedido" : "falhou");
+
+  if (status == ESP_NOW_SEND_SUCCESS) {
+    Serial.println("bem-sucedido");
+    conexaoBemSucedida = true;
+  } else {
+    Serial.println("falhou");
+    conexaoBemSucedida = false;
+  }
 }
 
 short direcao(short xDireita, short yDireita, short xEsquerda, short yEsquerda) {
@@ -146,6 +158,9 @@ void setup() {
   pinMode(PIN_EIXO_X_JOYSTICK_ESQUERDA, INPUT_PULLUP);
   pinMode(PIN_EIXO_Y_JOYSTICK_ESQUERDA, INPUT_PULLUP);
 
+  pinMode(PIN_LED_CONEXAO_FALHOU, OUTPUT);
+  pinMode(PIN_LED_CONEXAO_BEM_SUCEDIDA, OUTPUT);
+
   WiFi.mode(WIFI_STA);
 
   if (esp_now_init() != ESP_OK) {
@@ -176,11 +191,21 @@ void loop() {
   display();
 
   esp_err_t resultadoDoEnvio = esp_now_send(ENDERECO_MAC_DO_RECEPTOR, (uint8_t *)&meusDados, sizeof(meusDados));
+
   if (resultadoDoEnvio == ESP_OK) {
     Serial.println("Pacote enviado");
     mensagensDeDebug(true);
   } else {
     Serial.println("Erro no envio do pacote");
   }
+
+  if (conexaoBemSucedida) {
+    digitalWrite(PIN_LED_CONEXAO_BEM_SUCEDIDA, HIGH);
+    digitalWrite(PIN_LED_CONEXAO_FALHOU, LOW);
+  } else {
+    digitalWrite(PIN_LED_CONEXAO_BEM_SUCEDIDA, LOW);
+    digitalWrite(PIN_LED_CONEXAO_FALHOU, HIGH);
+  }
+  
   delay(100);
 }
