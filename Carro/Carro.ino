@@ -46,9 +46,21 @@ void OnDataRecv(const esp_now_recv_info_t *info, const uint8_t *dadosACaminho, i
 }
 
 void controleDeVelocidade() {
+
   /* O valor enviado ao PWM  deve ficar entre 0 e 255. Como a variável de nível de velocidade
   varia de 0 a 100, o valor enviado será o resultado inteiro da sua multiplicação por 2,55. */
-  int valorPWM = round(meusDados.velocidade * 2.55);
+
+  bool virando = meusDados.codigoDeDirecao == 3 || meusDados.codigoDeDirecao == 4;
+  int valorPWM;
+  
+  // Quando vira a direita ou a esquerda a velocidade é 15% menor
+  if (virando) {
+    int valorRecebido = round(meusDados.velocidade * 2.55);
+    int reducao = valorRecebido * 0.15;
+    valorPWM = round(valorRecebido - reducao);
+  } else {
+    valorPWM = round(meusDados.velocidade * 2.55);
+  }
 
   // Pino, frequência em Hz e resolução em bits
   ledcAttach(PIN_ENA_L298N, 5000, 8);
@@ -74,7 +86,7 @@ void direcao(short codigoDeDirecao) {
   } else if (codigoDeDirecao == 3) {
     // Para a direita
     digitalWrite(PIN_IN1_L298N, LOW);
-    digitalWrite(PIN_IN2_L298N, LOW);
+    digitalWrite(PIN_IN2_L298N, HIGH);
     digitalWrite(PIN_IN3_L298N, HIGH);
     digitalWrite(PIN_IN4_L298N, LOW);
   } else if (codigoDeDirecao == 4) {
@@ -82,7 +94,7 @@ void direcao(short codigoDeDirecao) {
     digitalWrite(PIN_IN1_L298N, HIGH);
     digitalWrite(PIN_IN2_L298N, LOW);
     digitalWrite(PIN_IN3_L298N, LOW);
-    digitalWrite(PIN_IN4_L298N, LOW);
+    digitalWrite(PIN_IN4_L298N, HIGH);
   } else {
     // Parado
     digitalWrite(PIN_IN1_L298N, LOW);
@@ -151,6 +163,7 @@ void setup() {
 }
 
 void loop() {
+
   controleDeVelocidade();
   direcao(meusDados.codigoDeDirecao);
   mensagensDeDebug(true);

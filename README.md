@@ -1,4 +1,4 @@
-![version](https://img.shields.io/badge/version-1.0.0-green)
+![version](https://img.shields.io/badge/version-1.0.1-green)
 
 - O código foi testado com a versão 3.1.1 da biblioteca do ESP32.
 - Certifique-se de substituir o endereço MAC no código pelos do seu transmissor e receptor.
