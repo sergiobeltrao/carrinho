@@ -18,6 +18,8 @@ const short PIN_IN4_L298N = 33;
 const short PIN_ENB_L298N = 32;
 const short PIN_LED_ONBOARD = 2;
 
+unsigned long ultimoPacoteRecebido = 0;
+
 // A estrutura de dados que será recebida
 typedef struct mensagemEstruturada {
   short xJoystickDireita;
@@ -50,6 +52,7 @@ void OnDataRecv(const esp_now_recv_info_t *info, const uint8_t *dadosACaminho, i
   }
 
   memcpy(&meusDados, dadosACaminho, sizeof(meusDados));
+  ultimoPacoteRecebido = millis();
 }
 
 void controleDeVelocidade() {
@@ -135,6 +138,20 @@ void mensagensDeDebug(bool ativado) {
   }
 }
 
+void detectaControleOff() {
+
+  bool controlesZerados = meusDados.xJoystickDireita == 0 && meusDados.yJoystickDireita == 0 && meusDados.xJoystickEsquerda == 0 && meusDados.yJoystickEsquerda == 0;
+
+  bool transmissorForaDoAr = (millis() - ultimoPacoteRecebido) > 200;
+
+  if (transmissorForaDoAr || controlesZerados) {
+    digitalWrite(PIN_LED_ONBOARD, HIGH);
+    delay(200);
+    digitalWrite(PIN_LED_ONBOARD, LOW);
+    delay(200);
+  }
+}
+
 void setup() {
 
   Serial.begin(115200);
@@ -195,4 +212,6 @@ void loop() {
 
     ESP.restart();
   }
+
+  detectaControleOff();
 }
