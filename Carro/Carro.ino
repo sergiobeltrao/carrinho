@@ -1,9 +1,14 @@
-// Código do receptor. Testado com a versão 3.1.1 da biblioteca do ESP32.
+// Código do receptor. Testado com a versão 3.1.2 da biblioteca do ESP32.
 #include <esp_now.h>
+#include <esp_wifi.h>
 #include <WiFi.h>
+#include <Preferences.h>
 
 // Não se esqueça de trocar pelo endereço do seu transmissor.
 const uint8_t ENDERECO_MAC_DO_TRANSMISSOR[] = { 0x3C, 0x8A, 0x1F, 0x55, 0xBD, 0xA0 };
+
+Preferences preferences;
+int canalAtual;
 
 const short PIN_ENA_L298N = 13;
 const short PIN_IN1_L298N = 27;
@@ -11,6 +16,7 @@ const short PIN_IN2_L298N = 26;
 const short PIN_IN3_L298N = 25;
 const short PIN_IN4_L298N = 33;
 const short PIN_ENB_L298N = 32;
+const short PIN_LED_ONBOARD = 2;
 
 // A estrutura de dados que será recebida
 typedef struct mensagemEstruturada {
@@ -20,6 +26,7 @@ typedef struct mensagemEstruturada {
   short yJoystickEsquerda;
   short codigoDeDirecao;
   short velocidade;
+  short canal;
 } mensagemEstruturada;
 
 mensagemEstruturada meusDados;
@@ -52,7 +59,7 @@ void controleDeVelocidade() {
 
   bool virando = meusDados.codigoDeDirecao == 3 || meusDados.codigoDeDirecao == 4;
   int valorPWM;
-  
+
   // Quando vira a direita ou a esquerda a velocidade é 15% menor
   if (virando) {
     int valorRecebido = round(meusDados.velocidade * 2.55);
@@ -110,7 +117,8 @@ void mensagensDeDebug(bool ativado) {
     Serial.println("Valor no Y da Direita: " + String(meusDados.yJoystickDireita));
     Serial.println("Valor no X da Esquerda: " + String(meusDados.xJoystickEsquerda));
     Serial.println("Valor no Y da Esquerda: " + String(meusDados.yJoystickEsquerda));
-    Serial.println("Nível de velocidade: " + String(meusDados.velocidade) + "%");
+    Serial.println("Nível de Velocidade: " + String(meusDados.velocidade) + "%");
+    Serial.println("Canal de Transmissão: " + String(preferences.getInt("valor", 1)));
     // Serial.println("Valor de clock: " + String(valorPWM));
     if (meusDados.codigoDeDirecao == 0) {
       Serial.println("Direção: Parado");
@@ -137,6 +145,10 @@ void setup() {
   pinMode(PIN_IN3_L298N, OUTPUT);
   pinMode(PIN_IN4_L298N, OUTPUT);
   pinMode(PIN_ENB_L298N, OUTPUT);
+  pinMode(PIN_LED_ONBOARD, OUTPUT);
+
+  preferences.begin("config", false);
+  canalAtual = preferences.getInt("valor", 1);
 
   /* Para a velocidade dos motores ficar sempre no máximo, descomente as próximas
   linhas e comente a função controleDeVelocidade() dentro do loop
@@ -144,6 +156,8 @@ void setup() {
   digitalWrite(PIN_ENB_L298N, HIGH); */
 
   WiFi.mode(WIFI_STA);
+
+  esp_wifi_set_channel(canalAtual, WIFI_SECOND_CHAN_NONE);
 
   if (esp_now_init() != ESP_OK) {
     Serial.println("Erro ao inicializar o ESP-NOW");
@@ -153,7 +167,7 @@ void setup() {
   esp_now_register_recv_cb(OnDataRecv);
 
   memcpy(informacoesDoPar.peer_addr, ENDERECO_MAC_DO_TRANSMISSOR, 6);
-  informacoesDoPar.channel = 0;
+  informacoesDoPar.channel = canalAtual;
   informacoesDoPar.encrypt = false;
 
   if (esp_now_add_peer(&informacoesDoPar) != ESP_OK) {
@@ -167,4 +181,18 @@ void loop() {
   controleDeVelocidade();
   direcao(meusDados.codigoDeDirecao);
   mensagensDeDebug(true);
+
+  // Evita reinicialização se ainda não recebeu um valor válido
+  if (meusDados.canal != 0 && meusDados.canal != canalAtual) {
+    preferences.putInt("valor", meusDados.canal);
+
+    for (int i = 10; i >= 0; i--) {
+      digitalWrite(PIN_LED_ONBOARD, HIGH);
+      delay(50);
+      digitalWrite(PIN_LED_ONBOARD, LOW);
+      delay(50);
+    }
+
+    ESP.restart();
+  }
 }
