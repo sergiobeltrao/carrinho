@@ -1,15 +1,18 @@
-// Código do transmissor. Testado com a versão 3.1.2 da biblioteca do ESP32.
+// Código do transmissor. Testado com a versão 3.1.3 da biblioteca do ESP32.
 #include <esp_now.h>
 #include <esp_wifi.h>
 #include <WiFi.h>
+#include <Preferences.h>
 #include <U8g2lib.h>
 #include <Wire.h>
-#include <Preferences.h>
 
 // Não se esqueça de trocar pelo endereço do seu receptor.
 const uint8_t ENDERECO_MAC_DO_RECEPTOR[] = { 0x3C, 0x8A, 0x1F, 0x50, 0x65, 0x7C };
 
 U8G2_SSD1306_128X64_NONAME_F_HW_I2C u8g2(U8G2_R0, U8X8_PIN_NONE);
+
+const short ALTURA_DISPLAY = 64;
+const short LARGURA_DISPLAY = 128;
 
 Preferences preferences;
 
@@ -69,25 +72,32 @@ void OnDataSent(const uint8_t *mac_addr, esp_now_send_status_t status) {
 
 short direcao(short xDireita, short yDireita, short xEsquerda, short yEsquerda) {
 
-  bool joystickDaDireitoParado = (xDireita >= 1600 && xDireita <= 1900) && (yDireita >= 1600 && yDireita <= 1900);
-  bool joystickDaEsquerdaParado = (xEsquerda >= 1600 && xEsquerda <= 1900) && (yEsquerda >= 1600 && yEsquerda <= 1900);
+  const short MINIMO = 0;
+  const short MAXIMO = 4096;
+  const short PROX_AO_MAXIMO = MAXIMO - 128;
+  const short VAL_CENTRAL = 1800;
+  const short ACIMA_DO_VAL_CENTRAL = VAL_CENTRAL + 64;
+  const short ABAIXO_DO_VAL_CENTRAL = VAL_CENTRAL - 64;
 
-  bool joystickDaDireitoParaFrente = xDireita >= 3072 && yDireita <= 4096;
-  bool joystickDaEsquerdaParaFrente = xEsquerda >= 3072 && yEsquerda <= 4096;
+  bool joyDireitoParado = (xDireita >= ABAIXO_DO_VAL_CENTRAL && xDireita <= ACIMA_DO_VAL_CENTRAL) && (yDireita >= ABAIXO_DO_VAL_CENTRAL && yDireita <= ACIMA_DO_VAL_CENTRAL);
+  bool joyEsquerdoParado = (xEsquerda >= ABAIXO_DO_VAL_CENTRAL && xEsquerda <= ACIMA_DO_VAL_CENTRAL) && (yEsquerda >= ABAIXO_DO_VAL_CENTRAL && yEsquerda <= ACIMA_DO_VAL_CENTRAL);
 
-  bool joystickDaDireitoParaTras = xDireita == 0 && yDireita >= 0;
-  bool joystickDaEsquerdaParaTras = xEsquerda == 0 && yEsquerda >= 0;
+  bool joyDireitoParaFrente = xDireita >= PROX_AO_MAXIMO && yDireita <= MAXIMO;
+  bool joyEsquerdoParaFrente = xEsquerda >= PROX_AO_MAXIMO && yEsquerda <= MAXIMO;
 
-  bool joystickDaDireitoParaDireita = xDireita >= 0 && yDireita > 3072;
-  bool joystickDaEsquerdaParaDireita = xEsquerda >= 0 && yEsquerda > 3072;
+  bool joyDireitoParaTras = xDireita == MINIMO && yDireita >= MINIMO;
+  bool joyEsquerdoParaTras = xEsquerda == MINIMO && yEsquerda >= MINIMO;
 
-  bool joystickDaDireitoParaEsquerda = xDireita >= 0 && yDireita == 0;
-  bool joystickDaEsquerdaParaEsquerda = xEsquerda >= 0 && yEsquerda == 0;
+  bool joyDireitoParaDireita = xDireita >= MINIMO && yDireita > PROX_AO_MAXIMO;
+  bool joyEsquerdoParaDireita = xEsquerda >= MINIMO && yEsquerda > PROX_AO_MAXIMO;
 
-  bool paraFrente = joystickDaDireitoParaFrente && joystickDaEsquerdaParaFrente || joystickDaDireitoParaFrente && joystickDaEsquerdaParado || joystickDaDireitoParado && joystickDaEsquerdaParaFrente;
-  bool paraTras = joystickDaDireitoParaTras && joystickDaEsquerdaParaTras || joystickDaDireitoParaTras && joystickDaEsquerdaParado || joystickDaDireitoParado && joystickDaEsquerdaParaTras;
-  bool direita = joystickDaDireitoParaDireita && joystickDaEsquerdaParaDireita || joystickDaDireitoParado && joystickDaEsquerdaParaDireita || joystickDaDireitoParaDireita && joystickDaEsquerdaParado;
-  bool esquerda = joystickDaDireitoParaEsquerda && joystickDaEsquerdaParaEsquerda || joystickDaDireitoParaEsquerda && joystickDaEsquerdaParado || joystickDaDireitoParado && joystickDaEsquerdaParaEsquerda;
+  bool joyDireitoParaEsquerda = xDireita >= MINIMO && yDireita == MINIMO;
+  bool joyEsquerdoParaEsquerda = xEsquerda >= MINIMO && yEsquerda == MINIMO;
+
+  bool paraFrente = joyDireitoParaFrente && joyEsquerdoParaFrente || joyDireitoParaFrente && joyEsquerdoParado || joyDireitoParado && joyEsquerdoParaFrente;
+  bool paraTras = joyDireitoParaTras && joyEsquerdoParaTras || joyDireitoParaTras && joyEsquerdoParado || joyDireitoParado && joyEsquerdoParaTras;
+  bool direita = joyDireitoParaDireita && joyEsquerdoParaDireita || joyDireitoParado && joyEsquerdoParaDireita || joyDireitoParaDireita && joyEsquerdoParado;
+  bool esquerda = joyDireitoParaEsquerda && joyEsquerdoParaEsquerda || joyDireitoParaEsquerda && joyEsquerdoParado || joyDireitoParado && joyEsquerdoParaEsquerda;
 
   if (paraFrente) {
     return 1;
@@ -110,76 +120,6 @@ void menuAtual() {
     menuVelocidade = true;
     menuCanal = false;
   }
-}
-
-void display() {
-  const short LARGURA_DISPLAY = 128;
-  const short ALTURA_DISPLAY = 64;
-  const short POSICAO_VERTICAL_TITULO_MENU = 20;
-  const short POSICAO_VERTICAL_VALOR_MENU = 50;
-
-  u8g2.clearBuffer();
-  u8g2.setFont(u8g2_font_fub17_tr);
-
-  if (menuVelocidade) {
-    char textoDisplay[5];
-    snprintf(textoDisplay, sizeof(textoDisplay), "%d%%", meusDados.velocidade);
-
-    short larguraStrVelocidade = u8g2.getStrWidth("Velocidade");
-    short posicaoHorizontalStrVelocidade = (LARGURA_DISPLAY - larguraStrVelocidade) / 2;
-    // Espaçamento a esquerda, espaçamento superior, texto
-    u8g2.drawStr(posicaoHorizontalStrVelocidade, POSICAO_VERTICAL_TITULO_MENU, "Velocidade");
-
-    short larguraValorVelocidade = u8g2.getStrWidth(textoDisplay);
-    short posicaoHorizontalValorVelocidade = (LARGURA_DISPLAY - larguraValorVelocidade) / 2;
-    u8g2.drawStr(posicaoHorizontalValorVelocidade, POSICAO_VERTICAL_VALOR_MENU, textoDisplay);
-
-    int alturaTextoNext = u8g2.getAscent() - u8g2.getDescent();
-    int larguraTextoNext = u8g2.getStrWidth(">");
-    int posAnterior = (ALTURA_DISPLAY + alturaTextoNext) / 2;
-    // Espaçamento a esquerda, espaçamento superior, texto
-    int distanciaEsquerda = LARGURA_DISPLAY - larguraTextoNext;
-    u8g2.drawStr(distanciaEsquerda, posAnterior, ">");
-  } else {
-    char textoDisplay[5];
-    snprintf(textoDisplay, sizeof(textoDisplay), "%d", canalDeTransmissao);
-
-    int larguraTextoCanal = u8g2.getStrWidth("Canal");
-    int posXCanal = (LARGURA_DISPLAY - larguraTextoCanal) / 2;
-    // Espaçamento a esquerda, espaçamento superior, texto
-    u8g2.drawStr(posXCanal, POSICAO_VERTICAL_TITULO_MENU, "Canal");
-
-    int larguraTextoNumero = u8g2.getStrWidth(textoDisplay);
-    int posXNumero = (LARGURA_DISPLAY - larguraTextoNumero) / 2;
-    // Espaçamento a esquerda, espaçamento superior, texto
-    u8g2.drawStr(posXNumero, POSICAO_VERTICAL_VALOR_MENU, textoDisplay);
-
-    int alturaTexto = u8g2.getAscent() - u8g2.getDescent();
-    int posAnterior = (ALTURA_DISPLAY + alturaTexto) / 2;
-    // Espaçamento a esquerda, espaçamento superior, texto
-    u8g2.drawStr(0, posAnterior, "<");
-
-    if (canalDeTransmissao != preferences.getInt("valor", 1)) {
-      int larguraTresPontos = u8g2.getStrWidth("___");
-      int posXTresPontos = (LARGURA_DISPLAY - larguraTresPontos) / 2;
-      // Espaçamento a esquerda, espaçamento superior, texto
-      u8g2.drawStr(posXTresPontos, 60, "___");
-    }
-
-    if (mudancaDeCanalComCarroDesligado == true) {
-      u8g2.clearBuffer();
-      int larguraTextoErro = u8g2.getStrWidth("Erro!");
-      int alturaTextoErro = u8g2.getAscent() - u8g2.getDescent();
-      int posHorizontalTextoErro = (LARGURA_DISPLAY - larguraTextoErro) / 2;
-      int posVerticalTextoErro = (ALTURA_DISPLAY + alturaTextoErro) / 2;
-      u8g2.drawStr(posHorizontalTextoErro, posVerticalTextoErro, "Erro!");
-      u8g2.sendBuffer();
-      delay(1500);
-      mudancaDeCanalComCarroDesligado = false;
-    }
-  }
-
-  u8g2.sendBuffer();
 }
 
 short controleDeVelocidade() {
@@ -269,6 +209,82 @@ void mensagensDeDebug(bool ativado) {
       Serial.println("Direção: Para a Esquerda");
     }
   }
+}
+
+short displayCentralizarHorizontal(char *texto) {
+  short larguraDoTexto = u8g2.getStrWidth(texto);
+  return (LARGURA_DISPLAY - larguraDoTexto) / 2;
+}
+
+short displayCentralizarVertical() {
+  short alturaDoTexto = u8g2.getAscent() - u8g2.getDescent();
+  return (ALTURA_DISPLAY + alturaDoTexto) / 2;
+}
+
+void displayItemDoMenu(char *titulo, char *valor) {
+  const short POSICAO_VERTICAL_TITULO = 20;
+  const short POSICAO_VERTICAL_VALOR = 50;
+
+  // Espaçamento a esquerda, espaçamento superior, texto
+  u8g2.drawStr(displayCentralizarHorizontal(titulo), POSICAO_VERTICAL_TITULO, titulo);
+  u8g2.drawStr(displayCentralizarHorizontal(valor), POSICAO_VERTICAL_VALOR, valor);
+}
+
+void displayIconesDeNavegacao(bool anterior, bool posterior) {
+
+  u8g2.setFont(u8g2_font_fub14_tr);
+
+  if (posterior) {
+    char proximoMenu[] = ">";
+    int distanciaEsquerda = LARGURA_DISPLAY - u8g2.getStrWidth(proximoMenu);
+    u8g2.drawStr(distanciaEsquerda, displayCentralizarVertical(), proximoMenu);
+  }
+
+  if (anterior) {
+    char menuAnterior[] = "<";
+    u8g2.drawStr(0, displayCentralizarVertical(), menuAnterior);
+  }
+}
+
+void displayErro() {
+  u8g2.clearBuffer();
+  u8g2.setFont(u8g2_font_fub17_tr);
+  char txtErro[] = "Erro!";
+  u8g2.drawStr(displayCentralizarHorizontal(txtErro), displayCentralizarVertical(), txtErro);
+  u8g2.sendBuffer();
+  delay(1500);
+}
+
+void display() {
+
+  u8g2.clearBuffer();
+  u8g2.setFont(u8g2_font_fub17_tr);
+
+  if (menuVelocidade) {
+
+    char textoDisplay[5];
+    snprintf(textoDisplay, sizeof(textoDisplay), "%d%%", meusDados.velocidade);
+    displayItemDoMenu("Velocidade", textoDisplay);
+
+    displayIconesDeNavegacao(false, true);
+  } else {
+    char textoCanal[4];
+    snprintf(textoCanal, sizeof(textoCanal), "%d%", canalDeTransmissao);
+    displayItemDoMenu("Canal", textoCanal);
+
+    displayIconesDeNavegacao(true, false);
+
+    if (canalDeTransmissao != preferences.getInt("valor", 1)) {
+      char txtNaoSalvo[] = "___";
+      u8g2.drawStr(displayCentralizarHorizontal(txtNaoSalvo), 60, txtNaoSalvo);
+    }
+  }
+
+  if (mudancaDeCanalComCarroDesligado == true) {
+    displayErro();
+    mudancaDeCanalComCarroDesligado = false;
+  }
+  u8g2.sendBuffer();
 }
 
 void setup() {

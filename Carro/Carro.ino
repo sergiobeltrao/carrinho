@@ -1,4 +1,4 @@
-// Código do receptor. Testado com a versão 3.1.2 da biblioteca do ESP32.
+// Código do receptor. Testado com a versão 3.1.3 da biblioteca do ESP32.
 #include <esp_now.h>
 #include <esp_wifi.h>
 #include <WiFi.h>
