@@ -1,8 +1,9 @@
-// Código do receptor. Testado com a versão 3.1.3 da biblioteca do ESP32.
+// Código do receptor. Testado com a versão 3.2.0 da biblioteca do ESP32.
 #include <esp_now.h>
 #include <esp_wifi.h>
 #include <WiFi.h>
 #include <Preferences.h>
+#include "Motores.h"
 
 // Não se esqueça de trocar pelo endereço do seu transmissor.
 const uint8_t ENDERECO_MAC_DO_TRANSMISSOR[] = { 0x3C, 0x8A, 0x1F, 0x55, 0xBD, 0xA0 };
@@ -10,12 +11,6 @@ const uint8_t ENDERECO_MAC_DO_TRANSMISSOR[] = { 0x3C, 0x8A, 0x1F, 0x55, 0xBD, 0x
 Preferences preferences;
 int canalAtual;
 
-const short PIN_ENA_L298N = 13;
-const short PIN_IN1_L298N = 27;
-const short PIN_IN2_L298N = 26;
-const short PIN_IN3_L298N = 25;
-const short PIN_IN4_L298N = 33;
-const short PIN_ENB_L298N = 32;
 const short PIN_LED_ONBOARD = 2;
 
 unsigned long ultimoPacoteRecebido = 0;
@@ -53,65 +48,6 @@ void OnDataRecv(const esp_now_recv_info_t *info, const uint8_t *dadosACaminho, i
 
   memcpy(&meusDados, dadosACaminho, sizeof(meusDados));
   ultimoPacoteRecebido = millis();
-}
-
-void controleDeVelocidade() {
-
-  /* O valor enviado ao PWM  deve ficar entre 0 e 255. Como a variável de nível de velocidade
-  varia de 0 a 100, o valor enviado será o resultado inteiro da sua multiplicação por 2,55. */
-
-  bool virando = meusDados.codigoDeDirecao == 3 || meusDados.codigoDeDirecao == 4;
-  int valorPWM;
-
-  // Quando vira a direita ou a esquerda a velocidade é 15% menor
-  if (virando) {
-    int valorRecebido = round(meusDados.velocidade * 2.55);
-    int reducao = valorRecebido * 0.15;
-    valorPWM = round(valorRecebido - reducao);
-  } else {
-    valorPWM = round(meusDados.velocidade * 2.55);
-  }
-
-  // Pino, frequência em Hz e resolução em bits
-  ledcAttach(PIN_ENA_L298N, 5000, 8);
-  ledcAttach(PIN_ENB_L298N, 5000, 8);
-
-  ledcWrite(PIN_ENA_L298N, valorPWM);
-  ledcWrite(PIN_ENB_L298N, valorPWM);
-}
-
-void direcao(short codigoDeDirecao) {
-  if (codigoDeDirecao == 1) {
-    // Para frente
-    digitalWrite(PIN_IN1_L298N, HIGH);
-    digitalWrite(PIN_IN2_L298N, LOW);
-    digitalWrite(PIN_IN3_L298N, HIGH);
-    digitalWrite(PIN_IN4_L298N, LOW);
-  } else if (codigoDeDirecao == 2) {
-    // Para trás
-    digitalWrite(PIN_IN1_L298N, LOW);
-    digitalWrite(PIN_IN2_L298N, HIGH);
-    digitalWrite(PIN_IN3_L298N, LOW);
-    digitalWrite(PIN_IN4_L298N, HIGH);
-  } else if (codigoDeDirecao == 3) {
-    // Para a direita
-    digitalWrite(PIN_IN1_L298N, LOW);
-    digitalWrite(PIN_IN2_L298N, HIGH);
-    digitalWrite(PIN_IN3_L298N, HIGH);
-    digitalWrite(PIN_IN4_L298N, LOW);
-  } else if (codigoDeDirecao == 4) {
-    // Para a esquerda
-    digitalWrite(PIN_IN1_L298N, HIGH);
-    digitalWrite(PIN_IN2_L298N, LOW);
-    digitalWrite(PIN_IN3_L298N, LOW);
-    digitalWrite(PIN_IN4_L298N, HIGH);
-  } else {
-    // Parado
-    digitalWrite(PIN_IN1_L298N, LOW);
-    digitalWrite(PIN_IN2_L298N, LOW);
-    digitalWrite(PIN_IN3_L298N, LOW);
-    digitalWrite(PIN_IN4_L298N, LOW);
-  }
 }
 
 void mensagensDeDebug(bool ativado) {
@@ -156,21 +92,12 @@ void setup() {
 
   Serial.begin(115200);
 
-  pinMode(PIN_ENA_L298N, OUTPUT);
-  pinMode(PIN_IN1_L298N, OUTPUT);
-  pinMode(PIN_IN2_L298N, OUTPUT);
-  pinMode(PIN_IN3_L298N, OUTPUT);
-  pinMode(PIN_IN4_L298N, OUTPUT);
-  pinMode(PIN_ENB_L298N, OUTPUT);
+  configuracaoMotores();
+
   pinMode(PIN_LED_ONBOARD, OUTPUT);
 
   preferences.begin("config", false);
   canalAtual = preferences.getInt("valor", 1);
-
-  /* Para a velocidade dos motores ficar sempre no máximo, descomente as próximas
-  linhas e comente a função controleDeVelocidade() dentro do loop
-  digitalWrite(PIN_ENA_L298N, HIGH);
-  digitalWrite(PIN_ENB_L298N, HIGH); */
 
   WiFi.mode(WIFI_STA);
 
@@ -195,7 +122,7 @@ void setup() {
 
 void loop() {
 
-  controleDeVelocidade();
+  controleDeVelocidade(meusDados.codigoDeDirecao, meusDados.velocidade);
   direcao(meusDados.codigoDeDirecao);
   mensagensDeDebug(true);
 
